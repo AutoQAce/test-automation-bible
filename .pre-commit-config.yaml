@@ -1,0 +1,51 @@
+# Install once: uv run pre-commit install --hook-type pre-commit --hook-type pre-push
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.8
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-merge-conflict
+      - id: check-toml
+      - id: check-yaml
+      - id: check-xml
+      - id: check-json
+      - id: detect-private-key
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: local
+    hooks:
+      - id: no-secrets-staged
+        name: no secrets in staged changes
+        entry: python .claude/hooks/scan.py secrets --staged
+        language: system
+        pass_filenames: false
+      - id: no-hidden-unicode
+        name: no hidden unicode
+        entry: python .claude/hooks/scan.py hidden-unicode
+        language: system
+        pass_filenames: false
+      - id: test-hygiene
+        name: test hygiene (sleeps, locators in tests, markers, oracles, quarantine)
+        entry: uv run --no-sync python scripts/hygiene_check.py
+        language: system
+        pass_filenames: false
+      - id: architecture-rules
+        name: architecture rules (docs/design/layers.toml)
+        entry: uv run --no-sync python scripts/architecture_check.py
+        language: system
+        pass_filenames: false
+      - id: all-quality-gates
+        name: all quality gates
+        entry: uv run --no-sync python scripts/check.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

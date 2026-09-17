@@ -1,0 +1,86 @@
+{
+  "env": {
+    "SDLC_TEST_CMD": "",
+    "SDLC_MAX_FIX_ATTEMPTS": "3",
+    "SDLC_FACT_FORCE": "1",
+    "SDLC_FACT_FORCE_PATHS": "src/",
+    "SDLC_MIN_PACKAGE_AGE_DAYS": "30",
+    "SDLC_ALLOW_PACKAGES": ""
+  },
+  "permissions": {
+    "allow": [
+      "Bash(uv run --no-sync pytest:*)",
+      "Bash(uv run --no-sync ruff:*)",
+      "Bash(uv run --no-sync mypy:*)",
+      "Bash(uv run --no-sync python scripts/check.py:*)",
+      "Bash(uv run --no-sync python scripts/hygiene_check.py:*)",
+      "Bash(uv run --no-sync python scripts/architecture_check.py:*)",
+      "Bash(uv run pytest:*)",
+      "Bash(uv run python scripts/check.py:*)",
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git reset --hard:*)",
+      "Bash(git commit --no-verify:*)",
+      "Bash(rm -rf /:*)",
+      "Bash(rm -rf ~:*)",
+      "Bash(sudo:*)",
+      "Bash(chmod 777:*)",
+      "Bash(chmod -R 777:*)",
+      "Bash(ssh:*)",
+      "Bash(scp:*)",
+      "Bash(dd:*)",
+      "Bash(mkfs:*)",
+      "Bash(curl * | sh:*)",
+      "Bash(wget * | sh:*)",
+      "Read(./test-data/production/**)",
+      "Read(./**/*.pfx)",
+      "Read(./**/*.p12)",
+      "Bash(uv publish:*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell|Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/pre_tool.py\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/post_tool.py\"",
+            "timeout": 90
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/stop.py\"",
+            "timeout": 600
+          }
+        ]
+      }
+    ]
+  }
+}

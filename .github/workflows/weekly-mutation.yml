@@ -1,0 +1,34 @@
+name: weekly-mutation
+
+on:
+  schedule:
+    - cron: "23 3 * * 0"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  framework-core:
+    runs-on: ubuntu-latest   # mutmut does not support native Windows
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Mutation testing of framework core (configure [tool.mutmut] once the HLD names the package)
+        run: |
+          if ! grep -q "^\[tool.mutmut\]" pyproject.toml; then
+            echo "::warning::[tool.mutmut] not configured yet; skipping."
+            exit 0
+          fi
+          uv run --no-sync mutmut run || true
+          uv run --no-sync mutmut results | tee mutation-results.txt
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: mutation-results
+          path: mutation-results.txt
+          if-no-files-found: ignore

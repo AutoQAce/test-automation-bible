@@ -1,0 +1,103 @@
+# Harness and quality-gate configuration for an enterprise test automation framework (TAF).
+# The framework's own package, dependencies (web/desktop/API libraries) and layout are added
+# through the SDLC: ADR decisions -> HLD -> LLD -> tasks. Agents may not weaken [tool.*] sections.
+
+[project]
+name = "test-automation-framework"
+version = "0.0.0"
+description = "Enterprise Python + pytest test automation framework for Web, Desktop and API (REST, XML/SOAP)."
+requires-python = ">=3.12"
+dependencies = [
+    "defusedxml>=0.7",   # safe XML parsing: never parse untrusted XML with the stdlib parser
+]
+
+[dependency-groups]
+dev = [
+    "mutmut>=3.3",
+    "mypy>=1.15",
+    "pip-audit>=2.9",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "pytest-cov>=6.0",
+    "pytest-xdist>=3.6",
+    "ruff>=0.12",
+    "types-defusedxml>=0.7.0.20260504",
+]
+
+[tool.uv]
+package = false
+
+# ---------------------------------------------------------------------------
+# Quality gates (protected by .claude/hooks)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+extend-exclude = [".sdlc"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", "F", "I", "B", "UP", "SIM", "RUF",
+    "S",      # security (bandit rules)
+    "BLE",    # no blind except
+    "T20",    # no print: use the framework logger / report
+    "ASYNC", "PT", "N", "C4", "RET", "TRY",
+    # Design discipline (skill code-design-lld)
+    "C90", "PLR0911", "PLR0912", "PLR0913", "PLR0915", "PLR2004",
+    "SLF",    # no reaching into other objects' private members
+    "ERA",    # no commented-out code
+    "PIE",
+]
+ignore = ["TRY003"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 8
+
+[tool.ruff.lint.pylint]
+max-args = 5
+max-branches = 10
+max-returns = 5
+max-statements = 40
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101", "S105", "S106", "PLR2004"]
+"**/tests/**" = ["S101", "S105", "S106", "S603", "S607", "PLR2004", "SLF", "TRY"]
+"scripts/**" = ["T20", "S603", "S607"]
+".claude/hooks/**" = ["T20", "S603", "S607"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+files = ["scripts"]          # add the framework package here once the HLD names it
+mypy_path = ".claude/hooks"
+exclude = ["scripts/tests/"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "scripts/tests", ".claude/hooks/tests"]
+addopts = "--strict-markers --strict-config -ra"
+xfail_strict = true
+markers = [
+    # Level (every test has one)
+    "unit: framework self-test, no external systems",
+    "contract: every implementation of a framework port must pass it (e.g. each driver adapter)",
+    "smoke: fast, critical-path suite gating every change",
+    "regression: full functional suite (nightly or pre-release)",
+    # Platform (automated test cases have one)
+    "web: drives a browser",
+    "desktop: drives a desktop application",
+    "api: calls an API",
+    "rest: REST/JSON API",
+    "soap: XML/SOAP API",
+    # Governance
+    "quarantine(reason, until): known-flaky, excluded from gating runs until fixed or expired",
+    "destructive: changes shared environment state; never runs in parallel with others",
+]
+
+[tool.coverage.run]
+branch = true
+omit = ["*/tests/*", "tests/*", ".venv/*"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+skip_covered = true

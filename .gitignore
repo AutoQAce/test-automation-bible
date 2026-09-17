@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+dist/
+build/
+
+# Local agent observability (traces, eval results, hook state)
+.sdlc/
+.claude/settings.local.json
+
+# Secrets
+.env
+.env.*
+!.env.example
+secrets/
+
+# Test run artifacts (evidence may contain sensitive data; never commit)
+reports/
+allure-results/
+test-results/
+*.har
+*.trace.zip
+screenshots/
+videos/
+junit*.xml

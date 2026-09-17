@@ -1,0 +1,64 @@
+# EXAMPLE ONLY. The HLD decides real layer names and paths; copy to docs/design/layers.toml then.
+# scripts/architecture_check.py enforces: imports between layers, and which layers may import each library.
+# A path prefix maps files to a layer; the longest matching prefix wins.
+
+[layers.tests]
+paths = ["tests/"]
+may_import = ["pages", "screens", "services", "assertions", "data", "config"]
+
+[layers.pages]            # web page and component objects
+paths = ["src/taf/web/pages/"]
+may_import = ["ports", "config"]
+
+[layers.screens]          # desktop screen objects
+paths = ["src/taf/desktop/screens/"]
+may_import = ["ports", "config"]
+
+[layers.services]         # REST and SOAP service objects
+paths = ["src/taf/api/services/"]
+may_import = ["ports", "models", "config"]
+
+[layers.web_driver]
+paths = ["src/taf/web/driver/"]
+may_import = ["ports", "config", "evidence"]
+
+[layers.desktop_driver]
+paths = ["src/taf/desktop/driver/"]
+may_import = ["ports", "config", "evidence"]
+
+[layers.api_clients]
+paths = ["src/taf/api/clients/"]
+may_import = ["ports", "models", "config", "evidence"]
+
+[layers.ports]
+paths = ["src/taf/ports/"]
+may_import = ["models"]
+
+[layers.models]
+paths = ["src/taf/models/"]
+
+[layers.assertions]
+paths = ["src/taf/assertions/"]
+may_import = ["models"]
+
+[layers.data]
+paths = ["src/taf/data/"]
+may_import = ["models", "services", "config"]
+
+[layers.evidence]
+paths = ["src/taf/evidence/"]
+may_import = ["config"]
+
+[layers.config]
+paths = ["src/taf/config/"]
+
+# Each engine library may be imported only by the layers listed (names depend on ADR decisions).
+[library_owners]
+playwright = ["web_driver"]
+selenium = ["web_driver"]
+pywinauto = ["desktop_driver"]
+appium = ["desktop_driver"]
+requests = ["api_clients"]
+httpx = ["api_clients"]
+zeep = ["api_clients"]
+lxml = ["api_clients"]

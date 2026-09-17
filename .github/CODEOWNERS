@@ -1,0 +1,19 @@
+# Replace @your-org/... with real people or teams.
+
+# Development harness and quality gates
+/AGENTS.md                         @your-org/harness-owners
+/CLAUDE.md                         @your-org/harness-owners
+/GEMINI.md                         @your-org/harness-owners
+/.claude/                          @your-org/harness-owners
+/scripts/                          @your-org/harness-owners
+/.github/                          @your-org/harness-owners
+/.pre-commit-config.yaml           @your-org/harness-owners
+/pyproject.toml                    @your-org/harness-owners
+
+# Architecture and design
+/docs/design/                      @your-org/test-architects
+/docs/adr/                         @your-org/test-architects
+
+# Framework core and suites (add paths once the HLD decides them)
+# /src/<framework>/                @your-org/framework-owners
+# /tests/                          @your-org/qa-leads

@@ -1,0 +1,134 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mode-boundary:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block proto/* and spike/* from targeting main
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          case "$HEAD_REF" in
+            proto/*|spike/*)
+              if [ "$BASE_REF" = "main" ]; then
+                echo "::error::$HEAD_REF is an exploration branch. Rebuild it through spec -> design -> tests."
+                exit 1
+              fi ;;
+          esac
+
+  harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: No hidden Unicode in prompts, skills, rules, tests, or data
+        run: python3 .claude/hooks/scan.py hidden-unicode
+      - name: No secrets added on this branch (incl. SOAP envelopes, URLs, connection strings)
+        if: github.event_name == 'pull_request'
+        run: python3 .claude/hooks/scan.py secrets --diff "origin/${{ github.base_ref }}"
+      - name: Direct dependencies are real and established
+        run: python3 scripts/verify_deps.py
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+      - name: AgentShield scan of .claude/ (fails on high or critical)
+        run: |
+          npx --yes ecc-agentshield@1.6.0 scan --path .claude --format json > agentshield.json
+          python3 - <<'EOF'
+          import json, sys
+          report = json.load(open("agentshield.json"))
+          print("AgentShield", report["score"]["grade"], report["score"]["numericScore"], report["summary"])
+          sys.exit(1 if report["summary"]["critical"] or report["summary"]["high"] else 0)
+          EOF
+
+  quality:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: ${{ matrix.python }}
+          enable-cache: true
+      - run: uv sync --locked
+      - name: All gates (format, lint + design rules, types, self-tests + coverage, architecture, hygiene, scans, audit)
+        run: uv run --no-sync python scripts/check.py
+
+  smoke-api-web:
+    needs: [quality]
+    runs-on: ubuntu-latest
+    environment: test          # environment-scoped secrets; never production
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      # Add engine/browser installation here once ADR D-01 is decided.
+      - name: API + web smoke (parallel)
+        env:
+          TAF_ENV: test
+        run: |
+
+          set +e
+          uv run --no-sync pytest -m "smoke and (api or web) and not quarantine" -n auto --junitxml=reports/junit.xml
+          code=$?
+          if [ "$code" = "5" ]; then echo "::warning::No API/web smoke tests yet."; exit 0; fi
+          exit $code
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: smoke-api-web-results
+          path: reports/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  smoke-desktop:
+    needs: [quality]
+    # Desktop UI needs an interactive Windows session; use a self-hosted runner configured for it
+    # (auto-logon, no screen lock, fixed resolution/DPI) once ADR D-02/D-07 are decided.
+    runs-on: windows-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v10
+        with:
+          python-version: "3.12"
+          enable-cache: true
+      - run: uv sync --locked
+      - name: Desktop smoke (serial per desktop session)
+        shell: bash
+        env:
+          TAF_ENV: test
+        run: |
+
+          set +e
+          uv run --no-sync pytest -m "smoke and desktop and not quarantine" -p no:xdist --junitxml=reports/junit.xml
+          code=$?
+          if [ "$code" = "5" ]; then echo "::warning::No desktop smoke tests yet."; exit 0; fi
+          exit $code
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: smoke-desktop-results
+          path: reports/
+          retention-days: 7
+          if-no-files-found: ignore
