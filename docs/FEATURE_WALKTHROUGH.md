@@ -43,7 +43,7 @@ your environment (applications, tool choices, numbers, dialogue) are **examples*
 | Instructions Claude reads on every turn | `AGENTS.md` (loaded through `CLAUDE.md`) |
 | Hook wiring, permissions, harness settings | `.claude/settings.json` |
 | Hooks | `.claude/hooks/pre_tool.py`, `post_tool.py`, `stop.py`, `scan.py`, `lib/*.py` |
-| 10 agents, 18 skills | `.claude/agents/`, `.claude/skills/` |
+| 10 agents, 19 skills | `.claude/agents/`, `.claude/skills/` |
 | Templates | `docs/specs/`, `docs/test-cases/`, `docs/design/`, `docs/adr/`, `docs/tasks/`, `docs/checklists/` |
 | Gate scripts | `scripts/check.py`, `architecture_check.py`, `hygiene_check.py`, `flaky_report.py`, `verify_deps.py`, `harness_eval.py` |
 | Git hooks config | `.pre-commit-config.yaml` |
@@ -150,7 +150,7 @@ claude
      `stop.py` when Claude tries to finish a turn.
 
    **HOOK · AI-SDLC + ECC**
-3. The names and descriptions of the 18 skills and 10 agents load. Their full text loads only when used.
+3. The names and descriptions of the 19 skills and 10 agents load. Their full text loads only when used.
    **AI-SDLC** (static vs dynamic context)
 
 **Check it yourself:** type `/hooks` to see the three registered hooks and `/agents` to see the ten agents.
@@ -898,6 +898,14 @@ artifact to review as a trend; the job never fails the build (`mutmut run || tru
 
 **AI-SDLC** (harness post-mortems, lessons) + **ECC** (hooks over prose)
 
+### Keeping the code wiki current (optional, with OpenWiki)
+If you set up `openwiki/` (skill `sdlc-wiki`, BIBLE section 3A):
+- Its scheduled workflow opens a docs PR after merges. You read `openwiki/log.md`, then the pages it names, and merge.
+- A feature PR that changes lines a wiki page cites fails the `check.py` gate "docs match code (OpenWiki claims)"
+  until you run `openwiki --update` and commit.
+
+**AI-SDLC + NEW**
+
 ### Checking that the harness still steers agents (optional)
 `uv run python scripts/harness_eval.py` runs the 4 cases in `evals/harness_cases.jsonl`:
 - It needs the `claude` CLI and spends tokens.
@@ -932,6 +940,7 @@ artifact to review as a trend; the job never fails the build (`mutmut run || tru
 | Spec / ADR / HLD / LLD approved before code | **none** | none | agents and skills | **you** |
 | Proof of failure, 3× stability runs | none | none | `test-author` | PR template checkbox, review |
 | Exploration branches never merge to `main` | none | `mode-boundary` | `AGENTS.md` | branch protection |
+| Code wiki matches the code it cites (only with `openwiki/`) | none | `verify_wiki.py` in `check.py` (CI, pre-push) | skill `sdlc-wiki`, reviewers | you merge docs PRs |
 
 ## Summary 2: Where each step comes from
 

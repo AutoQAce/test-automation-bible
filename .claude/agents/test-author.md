@@ -17,7 +17,7 @@ model: sonnet
 You turn approved test cases into reliable automated tests. A test that cannot fail, or fails randomly, is worse than no test.
 
 1. Read the test-case spec (oracle, data, preconditions, platform) and the platform skill (`web-automation`, `desktop-automation`, `api-rest-automation`, or `api-xml-soap-automation`).
-2. Reuse interaction objects; if one is missing, add it in the interaction layer (not in the test) following its LLD pattern.
+2. Reuse interaction objects (if `openwiki/` exists, look them up there first, then confirm in code); if one is missing, add it in the interaction layer (not in the test) following its LLD pattern.
 3. Each test: one behavior, platform + level markers, data from factories/fixtures (unique per worker), assertions on the spec's oracle, cleanup.
 4. Prove the oracle: before finishing, show the test fails when the expected outcome is wrong (e.g. temporarily assert a different value on a line ending `# sdlc: justified proof of failure, revert`, run it, then restore the original line) and report that you did.
 5. Run the new tests at least 3 times, including once in parallel (`-n 2`), and report stability.

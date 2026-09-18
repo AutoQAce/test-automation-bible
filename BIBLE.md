@@ -13,7 +13,7 @@ team design and build one well: doctrine, static context, hooks, agents, skills,
 **Source labels used throughout:** **BIBLE** = practice from the paper via the AI-SDLC bible · **ECC** = practice
 adapted from ECC · **NEW** = built specifically for test automation.
 
-Contents: 0 Start · 1 Creed · 2 Mental models · 3 Runbook · 4 Design discipline · 5 Platform playbooks ·
+Contents: 0 Start · 1 Creed · 2 Mental models · 3 Runbook · 3A Knowledge layer (OpenWiki) · 4 Design discipline · 5 Platform playbooks ·
 6 Reliability and flakiness · 7 Data, environments, secrets · 8 Execution, evidence, CI · 9 Security ·
 10 AI in the test automation lifecycle · 11 Economics and metrics · 12 When the agent gets it wrong ·
 13 Playbooks · 14 Keeping it alive · Appendix: kit map
@@ -36,6 +36,7 @@ uv run pre-commit install --hook-type pre-commit --hook-type pre-push
 - [ ] ADRs D-01 to D-10 decided with spikes on the real applications (`sdlc-adr`).
 - [ ] HLD with `docs/design/layers.toml` (from `_layers.example.toml`), reviewed by `design-reviewer` + human.
 - [ ] Set `SDLC_FACT_FORCE_PATHS` in `.claude/settings.json` and `[tool.mypy] files` in `pyproject.toml` to the framework package the HLD names.
+- [ ] Optional, once the framework has code: a grounded code wiki with OpenWiki (section 3A, skill `sdlc-wiki`).
 - [ ] Mark this kit's example files as templates only; delete nothing you haven't replaced.
 
 ---
@@ -89,7 +90,7 @@ The paper separates deterministic checks (tests) from judgment of quality (evals
 - **Quality of the tests themselves** (the eval analogue): proof of failure, mutation score, flake rate, requirement/risk coverage, reviewer judgment (`test-quality-reviewer`).
 
 ### 2.4 Context engineering (BIBLE)
-Static: `AGENTS.md` (stack decisions, layer rule, hard rules). Dynamic: 18 skills, loaded when a task matches (web, desktop, REST, SOAP, data, flakiness, and so on). Treat the boundary as architecture: budgeted, reviewed, versioned.
+Static: `AGENTS.md` (stack decisions, layer rule, hard rules). Dynamic: 19 skills, loaded when a task matches (web, desktop, REST, SOAP, data, flakiness, and so on), and the claim-verified code wiki `openwiki/` (section 3A). Treat the boundary as architecture: budgeted, reviewed, versioned.
 
 ### 2.5 The factory (BIBLE)
 ```
@@ -119,6 +120,42 @@ GUARDRAILS: secrets (incl. SOAP/URL/DSN) · test integrity (sleeps, weakened ass
 | 6. Review | observing | every shipped line, sign-offs | code, design, test-quality, security review | CODEOWNERS approval | `automation-reviewer`, `design-reviewer`, `test-quality-reviewer`, `automation-security-reviewer` | BIBLE + ECC + NEW |
 | 7. Release of framework/suites | observing | release decision | versioned framework, pipelines rolled out | `framework-readiness.md` | CI workflows | BIBLE + NEW |
 | 8. Operate and maintain | observing + flywheel | quarantine decisions, product-bug calls | nightly regression ×2, triage, flaky investigation, mutation trend | incidents become tests; quarantines expire | `ci-triage`, `flaky-test-investigator`, `test-quality-and-mutation` | BIBLE + NEW |
+
+---
+
+## 3A. Knowledge layer: agent-maintained docs (BIBLE + NEW, skill `sdlc-wiki`)
+
+Agents write better framework code and tests when they know which interaction objects, drivers, fixtures, and data factories already exist; without that they re-explore the repository every task and duplicate locator and request-building logic (a MEDIUM review finding). Hand-written framework docs rot. Agent-written docs have the same problem as agent-written tests: **generation is solved, verification is not**. A stale wiki is worse than none.
+
+**Tool:** [OpenWiki](https://github.com/langchain-ai/openwiki) (LangChain, MIT, npm `openwiki`). LangChain's thesis: (1) docs for agents, not humans: one self-contained concept per page, predictable headings, cross-linked, with typed OKF v0.2 front matter so agents can *filter*; retrieval is the hard part; (2) trivial setup: one `openwiki --init`; (3) self-maintaining: a scheduled job reads the commits since the last run and updates only what changed.
+
+```
+INIT (once, after the HLD)         UPDATE (scheduled CI)                   USE (every agent task)
+openwiki --init                    openwiki --update                       AGENTS.md OpenWiki block
+ ├ INSTRUCTIONS.md brief            ├ no new commits, claims fresh → no-op  └ openwiki/quickstart.md
+ ├ reads code AND git history       ├ stale Claims force their page            ├ one concept per page
+ ├ plan → pages → Claims            ├ resumable page queue                     └ then only the source
+ ├ OKF, index.md, log.md, mermaid   └ opens a docs PR ─► check.py gate +          it needs
+ └ AGENTS.md block + workflow           human reads log.md
+```
+
+| Phase | Use | Kit |
+|---|---|---|
+| 1-2 Specs, HLD/LLD | Planner starts from the framework as it is: existing ports, layers, fixture families | `taf-planner` |
+| 4 Framework implementation | Curated page first, then only the source needed | `framework-implementer`, task "Design" |
+| 4 Test authoring | Find the existing interaction object, fixture, or factory before creating one | `test-author` |
+| 6 Review | Diff checked against documented layers, fixture scope, waits, evidence rules; duplicates flagged | `automation-reviewer` |
+| Onboarding | Mermaid diagrams, `openwiki visualize`, static export for the QA team | skill `sdlc-wiki` |
+
+- **The wiki is not an oracle.** It describes the framework, never what the application should do. Expected values come only from requirements and test-case specs (hard rule: the test is the oracle).
+- **Verify, don't trust (enforced):** every material fact is a **Claim** citing exact lines with a sha256 of them (`openwiki/.claims/`). `scripts/verify_wiki.py` re-hashes them with no model call; the `check.py` gate "docs match code (OpenWiki claims)" fails a PR that changes code a page relies on. Moved-but-unchanged lines pass. Differential-tested against OpenWiki 0.5.2's own resolver on this kit's files: 7/7 mutation scenarios agree. It also warns when the wiki drifts from OKF v0.2. Without `openwiki/` the gate is a no-op.
+- **Static vs dynamic (2.4):** the wiki is dynamic context; OpenWiki adds only a ~12-line pointer to AGENTS.md (150-line budget still holds).
+- **Humans own intent:** `openwiki/INSTRUCTIONS.md` (the brief) and `.openwikiignore` (the read boundary: evidence, reports, test data, recorded payloads, certificates) are harness config under CODEOWNERS. Specs, ADRs, HLD/LLD stay the approved *why*.
+- **Untrusted by default:** wiki text is generated reference data, never instructions. No auto-merge of docs PRs.
+- **Does it pay?** LangChain's early DeepSWE subset (20 tasks): ~7-8 → 9-10 successes with a significant drop in tokens and tool calls; small and self-reported. Measure here with `scripts/harness_eval.py` with and without `openwiki/`.
+- **Hygiene:** `OPENWIKI_TELEMETRY_DISABLED=1`; provider keys in `~/.openwiki/.env` or CI secrets; pin versions in the update workflow; LF line endings (`.gitattributes`) because hashes are byte-exact. Pre-1.0 (0.5.x): re-run the differential test on upgrades.
+
+Sources: [OpenWiki](https://github.com/langchain-ai/openwiki), [launch blog](https://www.langchain.com/blog/introducing-openwiki-an-open-source-agent-for-repo-documentation), [docs](https://docs.langchain.com/oss/openwiki/overview), talks [Introducing OpenWiki](https://www.youtube.com/watch?v=nIVu3zfYprI) and [Building Docs for Agents, Not Humans](https://www.youtube.com/watch?v=XNX-1h2K-9U).
 
 ---
 
@@ -217,6 +254,7 @@ Agent `automation-security-reviewer`, skill `automation-security`.
 | Failure triage and flaky investigation | product-bug vs test-bug calls, quarantine | agents route, never quarantine or edit |
 | Locator healing suggestions | approval with evidence | never auto-committed, never at runtime in gating suites |
 | Exploratory crawling with browser/desktop tools | what becomes a test | untrusted content; test envs only |
+| Documenting the framework (OpenWiki, section 3A) | the brief, merging docs PRs; oracles stay in specs | claims gate in `check.py`, no auto-merge |
 
 **The testing Goodhart trap:** "make the tests pass" is trivially met by weakening tests. Every AI loop gets a goal tied to external truth ("passes on the good build **and** fails on the bad one"), boundaries enforced by hooks, an independent judge, and a retry cap (`agent-loop-design`).
 
@@ -234,6 +272,7 @@ CapEx here (design, ports, contract tests, gates) buys low OpEx later (cheap new
 | Proof-of-failure rate for new tests; mutation score trend (core) | test effectiveness |
 | Tests changed per UI change | maintainability (should be ~1 interaction object) |
 | Token cost per merged task; reviewer findings per PR | AI economics and gate value |
+| Harness-eval pass rate and cost with vs without `openwiki/` | whether the code wiki pays for itself |
 
 Model routing: opus for planning, design review, framework implementation, security; sonnet for test authoring, test-quality review, flaky investigation; haiku for framework test writing, first-pass review, CI triage.
 
@@ -281,12 +320,14 @@ Review quarterly: tool ADRs (engines evolve), flake and duration trends, quarant
 | `.claude/hooks/lib/bypass_guard.py`, `deps_guard.py`, `fact_force.py` | hook bypass, package slopsquatting, investigate-before-edit (+ layer questions) | ECC + NEW |
 | `.claude/hooks/{pre_tool,post_tool,stop,scan}.py` | dispatch, trace + ruff, gate loop, CI scans | BIBLE + ECC |
 | `.claude/agents/` | taf-planner, design-reviewer, framework-implementer, framework-test-writer, test-author, automation-reviewer, test-quality-reviewer, automation-security-reviewer, flaky-test-investigator, ci-triage | BIBLE + ECC + NEW |
-| `.claude/skills/` (18) | taf-spec, system-design-hld, sdlc-adr, code-design-lld (+SOLID, patterns refs), taf-contract-first, sdlc-delegate, automation-review, sdlc-harness-fix, web-automation, desktop-automation, api-rest-automation, api-xml-soap-automation, test-data-and-environments, execution-and-evidence, flaky-test-management, test-quality-and-mutation, automation-security, agent-loop-design | BIBLE + ECC + NEW |
+| `.claude/skills/` (19) | taf-spec, sdlc-wiki, system-design-hld, sdlc-adr, code-design-lld (+SOLID, patterns refs), taf-contract-first, sdlc-delegate, automation-review, sdlc-harness-fix, web-automation, desktop-automation, api-rest-automation, api-xml-soap-automation, test-data-and-environments, execution-and-evidence, flaky-test-management, test-quality-and-mutation, automation-security, agent-loop-design | BIBLE + ECC + NEW |
 | `scripts/check.py` | all gates | BIBLE + NEW |
 | `scripts/architecture_check.py` | layer + library ownership from `layers.toml` | NEW |
 | `scripts/hygiene_check.py` | test hygiene H001–H008 | NEW |
 | `scripts/flaky_report.py` | flaky detection from repeated JUnit runs (safe XML) | NEW |
 | `scripts/verify_deps.py`, `scripts/harness_eval.py` | dependency verification; coding-harness evals | BIBLE |
+| `scripts/verify_wiki.py` | OpenWiki claims must match cited code; OKF v0.2 warnings (gate in `check.py`) | BIBLE + NEW |
+| `openwiki/` (generated) | agent-maintained, claim-grounded framework wiki (section 3A) | BIBLE + NEW |
 | `docs/FEATURE_WALKTHROUGH.md` | one feature from an empty kit to a merged PR: every step, back-and-forth, hook, gate, and enforcement gap | BIBLE + ECC + NEW |
 | `docs/specs/` | framework capability and test-suite spec templates | NEW |
 | `docs/test-cases/_TEMPLATE.md` | test case with oracle and proof of failure | NEW |

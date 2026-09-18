@@ -14,12 +14,14 @@ def test_full_runs_coverage_and_scans() -> None:
     selected = names(fast=False, red_phase=False)
     assert "framework self-tests + coverage" in selected
     assert "vulnerable dependencies" in selected
+    assert "docs match code (OpenWiki claims)" in selected
 
 
 def test_fast_runs_self_tests_without_scans() -> None:
     selected = names(fast=True, red_phase=False)
     assert "framework self-tests" in selected
     assert "vulnerable dependencies" not in selected
+    assert "docs match code (OpenWiki claims)" not in selected
 
 
 def test_red_phase_is_fast_without_self_tests() -> None:
