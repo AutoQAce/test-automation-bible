@@ -18,7 +18,7 @@ Agents write better framework code and tests when they know which interaction ob
    - **Standalone CLI:** provider key in `~/.openwiki/.env` (never in the repo), then `openwiki --init` / `openwiki --update`. Needed for CI.
 5. It appends a ~12-line OpenWiki block to AGENTS.md and leaves `CLAUDE.md` (`@AGENTS.md`) alone. AGENTS.md must stay under the 150-line budget (`check.py`).
 6. `uv run python scripts/verify_wiki.py` must pass. Commit `openwiki/` including `openwiki/.claims/`.
-7. Keep it fresh: `--init` writes `.github/workflows/openwiki-update.yml` (daily; every 4-8h for busy repos). Pin the openwiki version and actions. Do **not** use the auto-merge variant: a human merges docs PRs (CODEOWNERS on `/.github/`).
+7. Keep it fresh: the kit ships `.github/workflows/openwiki-update.yml` (daily at 08:00 UTC; every 4-8h for busy repos), off until you opt in. Turn it on after the first wiki is merged: repo secret `ANTHROPIC_API_KEY` (or edit its provider block), repo secret `OPENWIKI_PR_TOKEN` (fine-grained, this repo only, Contents + Pull requests read/write; without it GitHub runs no PR checks on the bot's PR), repo variable `OPENWIKI_ENABLED=true`. It pins openwiki and every action, disables telemetry, commits only `openwiki/`, `AGENTS.md`, `CLAUDE.md` (never workflow files), and opens a PR that a human merges. `--init` never overwrites it. Do **not** switch to the auto-merge variant.
 
 ## Using the wiki
 - Start at `openwiki/quickstart.md`, follow links to one-concept pages, then read only the source you need. Code and tests win where the wiki disagrees; report the mismatch.

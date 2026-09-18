@@ -900,7 +900,10 @@ artifact to review as a trend; the job never fails the build (`mutmut run || tru
 
 ### Keeping the code wiki current (optional, with OpenWiki)
 If you set up `openwiki/` (skill `sdlc-wiki`, BIBLE section 3A):
-- Its scheduled workflow opens a docs PR after merges. You read `openwiki/log.md`, then the pages it names, and merge.
+- Turn on `.github/workflows/openwiki-update.yml` (off by default): secrets `ANTHROPIC_API_KEY` and `OPENWIKI_PR_TOKEN`,
+  variable `OPENWIKI_ENABLED=true`. **HUMAN · CI**
+- Daily at 08:00 UTC it opens a docs PR (docs only, never workflow files). You read `openwiki/log.md`, then the
+  pages it names, and merge. It never auto-merges.
 - A feature PR that changes lines a wiki page cites fails the `check.py` gate "docs match code (OpenWiki claims)"
   until you run `openwiki --update` and commit.
 

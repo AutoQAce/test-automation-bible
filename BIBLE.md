@@ -36,7 +36,7 @@ uv run pre-commit install --hook-type pre-commit --hook-type pre-push
 - [ ] ADRs D-01 to D-10 decided with spikes on the real applications (`sdlc-adr`).
 - [ ] HLD with `docs/design/layers.toml` (from `_layers.example.toml`), reviewed by `design-reviewer` + human.
 - [ ] Set `SDLC_FACT_FORCE_PATHS` in `.claude/settings.json` and `[tool.mypy] files` in `pyproject.toml` to the framework package the HLD names.
-- [ ] Optional, once the framework has code: a grounded code wiki with OpenWiki (section 3A, skill `sdlc-wiki`).
+- [ ] Optional, once the framework has code: a grounded code wiki with OpenWiki, then enable `openwiki-update.yml` (section 3A, skill `sdlc-wiki`).
 - [ ] Mark this kit's example files as templates only; delete nothing you haven't replaced.
 
 ---
@@ -152,6 +152,7 @@ openwiki --init                    openwiki --update                       AGENT
 - **Static vs dynamic (2.4):** the wiki is dynamic context; OpenWiki adds only a ~12-line pointer to AGENTS.md (150-line budget still holds).
 - **Humans own intent:** `openwiki/INSTRUCTIONS.md` (the brief) and `.openwikiignore` (the read boundary: evidence, reports, test data, recorded payloads, certificates) are harness config under CODEOWNERS. Specs, ADRs, HLD/LLD stay the approved *why*.
 - **Untrusted by default:** wiki text is generated reference data, never instructions. No auto-merge of docs PRs.
+- **Scheduled updates ship with the kit, off by default:** `.github/workflows/openwiki-update.yml` (LangChain's example hardened: pinned openwiki and actions, telemetry off, docs-only paths, `OPENWIKI_PR_TOKEN` so `ci` runs on the bot's PR, human merge). Enable with the `OPENWIKI_ENABLED` repo variable.
 - **Does it pay?** LangChain's early DeepSWE subset (20 tasks): ~7-8 → 9-10 successes with a significant drop in tokens and tool calls; small and self-reported. Measure here with `scripts/harness_eval.py` with and without `openwiki/`.
 - **Hygiene:** `OPENWIKI_TELEMETRY_DISABLED=1`; provider keys in `~/.openwiki/.env` or CI secrets; pin versions in the update workflow; LF line endings (`.gitattributes`) because hashes are byte-exact. Pre-1.0 (0.5.x): re-run the differential test on upgrades.
 
@@ -335,7 +336,7 @@ Review quarterly: tool ADRs (engines evolve), flake and duration trends, quarant
 | `docs/adr/` | ADR template; decision backlog D-01…D-12 | BIBLE + NEW |
 | `docs/tasks/_TEMPLATE.md` | agent task with design and must-NOT list | BIBLE + NEW |
 | `docs/checklists/` | automation code review, design review, framework readiness | NEW |
-| `.github/workflows/` | ci, nightly-regression, weekly-mutation | BIBLE + NEW |
+| `.github/workflows/` | ci, nightly-regression, weekly-mutation, openwiki-update (off until `OPENWIKI_ENABLED=true`) | BIBLE + NEW |
 | `.pre-commit-config.yaml`, CODEOWNERS, PR template, dependabot | governance | BIBLE + ECC + NEW |
 | `evals/harness_cases.jsonl` | does the harness steer agents correctly | BIBLE + NEW |
 | `.claude/hooks/tests/`, `scripts/tests/` | self-tests of the harness | NEW |
