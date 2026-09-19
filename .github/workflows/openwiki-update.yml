@@ -1,0 +1,95 @@
+# Keeps the agent-maintained code wiki (openwiki/) current. Skill: sdlc-wiki.
+#
+# Based on LangChain's examples/openwiki-update.yml, with this kit's rules:
+# pinned versions, telemetry off, a dedicated PR token so CI gates run on the
+# docs PR, and a human merge (never auto-merge: the wiki steers every future agent).
+#
+# Off until you opt in. To turn it on:
+#   1. Generate the wiki once and merge it (openwiki --init, skill sdlc-wiki).
+#   2. Repository secret ANTHROPIC_API_KEY (or change the provider block below).
+#   3. Repository secret OPENWIKI_PR_TOKEN: fine-grained token for this repo only,
+#      Contents + Pull requests read/write. Without it the PR is opened with
+#      GITHUB_TOKEN, and GitHub does not run your PR checks on it.
+#   4. Repository variable OPENWIKI_ENABLED = true.
+# OpenWiki's --init never overwrites this file, so edits here survive.
+
+name: openwiki-update
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * *" # daily, 08:00 UTC; every 4-8 hours for busy repos
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: openwiki-update
+  cancel-in-progress: false # a run in progress owns openwiki/.run.json; never cut it off
+
+jobs:
+  update:
+    if: vars.OPENWIKI_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          # Full history: `openwiki code --update` diffs HEAD against the commit it
+          # last documented; a shallow clone hides that commit.
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "22"
+
+      - name: Install OpenWiki (pinned; bump deliberately and re-run the differential test)
+        # mermaid + jsdom give exact Mermaid validation; drop them if the wiki has no diagrams.
+        run: npm install --global openwiki@0.5.2 mermaid@11.16.0 jsdom@29.1.1
+
+      - name: Run OpenWiki
+        id: openwiki
+        continue-on-error: true
+        run: openwiki code --update --print
+        env:
+          OPENWIKI_TELEMETRY_DISABLED: "1"
+          OPENWIKI_PROVIDER: anthropic
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENWIKI_MODEL_ID: claude-sonnet-5 # OpenWiki's default is Haiku; wiki quality is worth Sonnet
+          # LLM apps: document runtime behavior from LangSmith traces (connector set up at --init).
+          # OPENWIKI_LANGSMITH_API_KEY: ${{ secrets.OPENWIKI_LANGSMITH_API_KEY }}
+
+      - name: Remove transient run state
+        if: ${{ !cancelled() }}
+        run: rm -f -- openwiki/.run.json
+
+      - name: Open the docs pull request (a human merges it)
+        if: ${{ !cancelled() }}
+        uses: peter-evans/create-pull-request@22a9089034f40e5a961c8808d113e2c98fb63676 # v7
+        with:
+          token: ${{ secrets.OPENWIKI_PR_TOKEN || github.token }}
+          # Docs only. Workflow files stay out: a bot must never change executable CI.
+          add-paths: |
+            openwiki
+            AGENTS.md
+            CLAUDE.md
+          branch: openwiki/update
+          commit-message: "docs: update OpenWiki"
+          title: "docs: update OpenWiki"
+          body: |
+            Automated OpenWiki update. Result: `${{ steps.openwiki.outcome }}`
+
+            Review before merging (skill `sdlc-wiki`):
+            - Read `openwiki/log.md` first, then only the pages it names.
+            - Look hard at pages about auth, data, irreversible actions, and hard rules.
+            - The "docs match code" gate must be green. Do not enable auto-merge.
+
+            On `failure`, this PR keeps only the pages finished before the failure;
+            merging it makes that progress the baseline for the next run.
+
+      - name: Propagate OpenWiki failure
+        if: ${{ steps.openwiki.outcome == 'failure' }}
+        run: exit 1

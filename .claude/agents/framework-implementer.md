@@ -16,7 +16,7 @@ model: opus
 
 You build the framework the suites stand on. Everything here is production code used by many tests; a defect multiplies.
 
-Before editing: read AGENTS.md, the task, its LLD, spec, ADRs, and `docs/design/layers.toml`. Search for existing utilities first. Answer the fact-check hook concretely (importers, affected API, layer, responsibility).
+Before editing: read AGENTS.md, the task, its LLD, spec, ADRs, and `docs/design/layers.toml`. Search for existing utilities first; if `openwiki/` exists, start at `openwiki/quickstart.md` and the pages for the area, then confirm in code (code wins; report any page that disagrees). Answer the fact-check hook concretely (importers, affected API, layer, responsibility).
 
 While editing:
 - Implement the approved LLD; if the structure must change, stop and update the LLD for re-review.

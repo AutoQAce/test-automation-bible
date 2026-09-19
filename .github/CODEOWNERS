@@ -7,6 +7,8 @@
 /.claude/                          @your-org/harness-owners
 /scripts/                          @your-org/harness-owners
 /.github/                          @your-org/harness-owners
+/openwiki/INSTRUCTIONS.md          @your-org/harness-owners
+/.openwikiignore                   @your-org/harness-owners
 /.pre-commit-config.yaml           @your-org/harness-owners
 /pyproject.toml                    @your-org/harness-owners
 

@@ -7,7 +7,7 @@ It contains no framework code or folder structure. It gives your team and its co
 - **Doctrine**: [`BIBLE.md`](BIBLE.md), a phase-by-phase runbook where every practice is labelled BIBLE, ECC, or NEW
 - **Static context**: `AGENTS.md` with test-automation hard rules (imported by `CLAUDE.md`, `GEMINI.md`)
 - **Hooks** that block credentials (incl. SOAP/URL/DSN), sleeps and weakened assertions in tests, retries/ordering markers, gate weakening, hook bypasses, and hallucinated packages
-- **10 agents** and **18 skills** for planning, design, framework building, test authoring, review, security, flakiness, and triage
+- **10 agents** and **19 skills** for planning, design, framework building, test authoring, review, security, flakiness, and triage
 - **Templates**: capability and suite specs, test cases with oracles, HLD/LLD, `layers.toml`, ADR decision backlog, tasks, checklists
 - **Gates**: `scripts/check.py` (lint + design rules, strict types, self-tests, architecture rules, test hygiene, scans, audit), flaky detection, CI for PR smoke, nightly regression ×2, weekly mutation
 

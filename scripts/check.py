@@ -45,6 +45,7 @@ FULL = (
     ("architecture rules (layers.toml)", uv_run("python", "scripts/architecture_check.py")),
     ("test hygiene", uv_run("python", "scripts/hygiene_check.py")),
     ("hidden unicode", uv_run("python", ".claude/hooks/scan.py", "hidden-unicode")),
+    ("docs match code (OpenWiki claims)", uv_run("python", "scripts/verify_wiki.py")),
     ("vulnerable dependencies", uv_run("pip-audit", "--skip-editable", "--progress-spinner", "off")),
 )
 FAST = (

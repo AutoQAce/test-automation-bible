@@ -22,4 +22,5 @@ Priorities:
 - HIGH: hard sleeps; locators or endpoints in tests; retries/reruns masking failures; skip/xfail without reason; session-scoped mutable fixtures under xdist; `except Exception` that hides a failure; missing cleanup; no evidence on failure.
 - MEDIUM: duplicated locator or request-building logic; god page objects; magic values; unclear failure messages.
 - DESIGN: request `design-reviewer` for new/changed modules, classes, Protocols, fixtures, or data models.
+- WIKI (if `openwiki/` exists): check the diff against documented layers, fixture scope, waits, and evidence rules; a new interaction object, fixture, or factory duplicating a documented one is MEDIUM. Run `uv run --no-sync python scripts/verify_wiki.py`: STALE means docs and code now disagree; the PR must update the wiki.
 Verify each finding in code. Return `SEVERITY file:line: problem -> fix`, CRITICAL first, and a BLOCK verdict if any CRITICAL/HIGH remains.

@@ -9,6 +9,7 @@ Agent: framework-implementer | test-author        Mode: orchestrator | conductor
 - Module/object responsibilities and layer:
 - Ports/Protocols touched:
 - SOLID and simplicity check (one line each):
+- Wiki pages to read (if `openwiki/` exists; links, not pasted code):
 
 ## Done when (binary)
 - [ ] Tests pass: `<ids>`, each run ≥ 3 times including in parallel
