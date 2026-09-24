@@ -33,7 +33,7 @@ jobs:
   harness:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
         with:
           fetch-depth: 0
       - name: No hidden Unicode in prompts, skills, rules, tests, or data
@@ -62,7 +62,7 @@ jobs:
       matrix:
         python: ["3.12", "3.13"]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           python-version: ${{ matrix.python }}
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: test          # environment-scoped secrets; never production
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           python-version: "3.12"
@@ -108,7 +108,7 @@ jobs:
     runs-on: windows-latest
     environment: test
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           python-version: "3.12"

@@ -17,7 +17,7 @@ jobs:
       matrix:
         browser: [primary, secondary]   # map to real browsers once ADR D-01 is decided
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           python-version: "3.12"
@@ -51,7 +51,7 @@ jobs:
     runs-on: windows-latest   # replace with the self-hosted interactive Windows runner
     environment: test
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           python-version: "3.12"
@@ -87,7 +87,7 @@ jobs:
     environment: test
     continue-on-error: true
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           python-version: "3.12"
