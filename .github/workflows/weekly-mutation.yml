@@ -12,7 +12,7 @@ jobs:
   framework-core:
     runs-on: ubuntu-latest   # mutmut does not support native Windows
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7.0.1
       - uses: astral-sh/setup-uv@v10.1.0
         with:
           python-version: "3.12"
