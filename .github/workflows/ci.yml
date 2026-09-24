@@ -43,7 +43,7 @@ jobs:
         run: python3 .claude/hooks/scan.py secrets --diff "origin/${{ github.base_ref }}"
       - name: Direct dependencies are real and established
         run: python3 scripts/verify_deps.py
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: "22"
       - name: AgentShield scan of .claude/ (fails on high or critical)
